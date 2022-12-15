@@ -15,6 +15,9 @@ memory: 2
 # Default: host
 arch: host
 
+# VN image locations
+images: []
+
 # Container runtime to be used (docker, containerd).
 # Default: docker
 runtime: docker

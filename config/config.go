@@ -78,6 +78,7 @@ type Config struct {
 	ForwardAgent bool              `yaml:"forwardAgent,omitempty"`
 	Network      Network           `yaml:"network,omitempty"`
 	Env          map[string]string `yaml:"env,omitempty"` // environment variables
+	Images       []Image           `yaml:"images,omitempty"`
 
 	// VM VMType
 	VMType string `yaml:"vmType,omitempty"`
@@ -104,6 +105,12 @@ type Config struct {
 
 	// SSH config generation
 	SSHConfig bool `yaml:"sshConfig,omitempty"`
+}
+
+type Image struct {
+	Location string `yaml:"location"` // REQUIRED
+	Arch     string `yaml:"arch,omitempty"`
+	Digest   string `yaml:"digest,omitempty"`
 }
 
 // Kubernetes is kubernetes configuration

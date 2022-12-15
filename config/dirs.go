@@ -98,6 +98,11 @@ func TemplatesDir() string { return templatesDir.Dir() }
 // WrapperDir returns the qemu wrapper directory.
 func WrapperDir() string { return wrapperDir.Dir() }
 
+// ImageFile returns the path to the VM Image file.
+func ImageFile(arch string) string {
+	return filepath.Join(Dir(), "vm-"+arch+".img")
+}
+
 const ConfigFileName = "colima.yaml"
 
 func configFile() string { return filepath.Join(configDir.Dir(), ConfigFileName) }

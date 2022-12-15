@@ -102,6 +102,7 @@ var startCmdArgs struct {
 	config.Config
 
 	Flags struct {
+		Images           []string
 		Mounts           []string
 		LegacyKubernetes bool // for backward compatibility
 		Edit             bool
@@ -133,6 +134,7 @@ func init() {
 	startCmd.Flags().IntVarP(&startCmdArgs.Memory, "memory", "m", defaultMemory, "memory in GiB")
 	startCmd.Flags().IntVarP(&startCmdArgs.Disk, "disk", "d", defaultDisk, "disk size in GiB")
 	startCmd.Flags().StringVarP(&startCmdArgs.Arch, "arch", "a", defaultArch, "architecture (aarch64, x86_64)")
+	startCmd.Flags().StringSliceVarP(&startCmdArgs.Flags.Images, "images", "i", nil, "qemu images location")
 
 	// network
 	if util.MacOS() {
@@ -191,6 +193,34 @@ func dnsHostsFromFlag(hosts []string) map[string]string {
 	return mapping
 }
 
+// imagesFromFlag converts images from cli flag format to config file format
+func imagesFromFlag(args []string) []config.Image {
+	imgs := make([]config.Image, len(args))
+	for i, arg := range args {
+		str := strings.SplitN(arg, ":", 3)
+		img := config.Image{Location: str[0]}
+
+		if len(str) > 1 {
+			switch str[1] {
+			case environment.AARCH64.GoArch():
+			case environment.X8664.GoArch():
+				img.Arch = str[1]
+			default:
+				img.Digest = str[1]
+			}
+		}
+		if len(str) > 2 {
+			switch str[2] {
+			case environment.AARCH64.GoArch():
+			case environment.X8664.GoArch():
+				img.Arch = str[2]
+			}
+		}
+		imgs[i] = img
+	}
+	return imgs
+}
+
 // mountsFromFlag converts mounts from cli flag format to config file format
 func mountsFromFlag(mounts []string) []config.Mount {
 	mnts := make([]config.Mount, len(mounts))
@@ -229,6 +259,7 @@ func prepareConfig(cmd *cobra.Command) {
 	}
 
 	// convert cli to config file format
+	startCmdArgs.Images = imagesFromFlag(startCmdArgs.Flags.Images)
 	startCmdArgs.Mounts = mountsFromFlag(startCmdArgs.Flags.Mounts)
 	startCmdArgs.Network.DNSHosts = dnsHostsFromFlag(startCmdArgs.Flags.DNSHosts)
 	startCmdArgs.ActivateRuntime = &startCmdArgs.Flags.ActivateRuntime
@@ -263,6 +294,9 @@ func prepareConfig(cmd *cobra.Command) {
 	// otherwise may be reverted to their default values.
 	if !cmd.Flag("arch").Changed {
 		startCmdArgs.Arch = current.Arch
+	}
+	if !cmd.Flag("images").Changed {
+		startCmdArgs.Images = current.Images
 	}
 	if !cmd.Flag("disk").Changed {
 		startCmdArgs.Disk = current.Disk
